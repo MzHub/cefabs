@@ -13,7 +13,7 @@ IF(EXISTS ${PROJECT_SOURCE_DIR}/.git)
     MARK_AS_ADVANCED(git_PROG)
     IF(git_PROG)
         EXECUTE_PROCESS(
-            COMMAND ${git_PROG} describe --long
+            COMMAND ${git_PROG} describe --tags --long
             WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
             OUTPUT_VARIABLE git_OUTPUT
             RESULT_VARIABLE git_RESULT)
