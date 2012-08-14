@@ -54,7 +54,7 @@ inline float rsqrtf(float x)
 }
 
 #ifdef _MSC_VER
-inline float copysignf(float x, float y) { return _copysignf(x, y); }
+inline float copysignf(float x, float y) { return (float)_copysign(x, y); }
 #endif
 #endif
 
