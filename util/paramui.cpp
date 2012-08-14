@@ -1,6 +1,6 @@
 //
 // by Jan Eric Kyprianidis <www.kyprianidis.com>
-// Copyright (C) 2010-2011 Computer Graphics Systems Group at the
+// Copyright (C) 2010-2012 Computer Graphics Systems Group at the
 // Hasso-Plattner-Institut, Potsdam, Germany <www.hpi3d.de>
 // 
 // This program is free software: you can redistribute it and/or modify
@@ -20,15 +20,7 @@
 
 ParamUI::ParamUI(QWidget *parent, QObject *object) : RolloutBox(parent), m_object(object) {
     connect(object, SIGNAL(destroyed(QObject*)), this, SLOT(deleteLater()));
-}
-
-
-bool ParamUI::event(QEvent *event) {
-    bool result = QFrame::event(event);
-    if (event->type() == QEvent::Polish) {
-        addObjectParameters(m_object);
-    }
-    return result;
+    addObjectParameters(m_object);
 }
 
 
@@ -131,7 +123,7 @@ void ParamUI::addObjectParameters(QObject *obj) {
 
 
 ParamLabel::ParamLabel(QWidget *parent, AbstractParam *param) : QLabel(param->name(), parent) {
-    setFixedHeight(fontMetrics().height()+6);
+    setFixedHeight(fontMetrics().height()+8);
     m_param = param;
     connect(param, SIGNAL(destroyed(QObject*)), this, SLOT(deleteLater()));
 }
@@ -146,7 +138,7 @@ void ParamLabel::mouseDoubleClickEvent(QMouseEvent * e) {
 
 ParamCheckBox::ParamCheckBox(QWidget *parent, AbstractParam *param) : QCheckBox(parent) {
     m_param = param;
-    setFixedHeight(fontMetrics().height()+6);
+    setFixedHeight(fontMetrics().height()+8);
     setChecked(param->value().toBool());
     connect(param, SIGNAL(destroyed(QObject*)), this, SLOT(deleteLater()));
     connect(param, SIGNAL(valueChanged(bool)), this, SLOT(setChecked(bool)));
@@ -162,6 +154,8 @@ bool ParamCheckBox::event(QEvent *e) {
             case QEvent::MouseMove:
                 e->ignore();
                 return false;
+            default:
+                break;
         }
     }
     return QCheckBox::event(e);
@@ -170,7 +164,7 @@ bool ParamCheckBox::event(QEvent *e) {
 
 ParamSpinBox::ParamSpinBox(QWidget *parent, AbstractParam *param) : QSpinBox(parent) {
     m_param = param;
-    setFixedHeight(fontMetrics().height()+6);
+    setFixedHeight(fontMetrics().height()+8);
     QVariantHash attr = param->attributes();
     int rmin = attr.value("minimum", -INT_MAX).toInt();
     int rmax = attr.value("maximum", INT_MAX).toInt();
@@ -187,7 +181,7 @@ ParamSpinBox::ParamSpinBox(QWidget *parent, AbstractParam *param) : QSpinBox(par
 
 ParamDoubleSpinBox::ParamDoubleSpinBox(QWidget *parent, AbstractParam *param) : QDoubleSpinBox(parent) {
     m_param = param;
-    setFixedHeight(fontMetrics().height()+6);
+    setFixedHeight(fontMetrics().height()+8);
     QVariantHash attr = param->attributes();
     double rmin = attr.value("minimum", -FLT_MAX).toDouble();
     double rmax = attr.value("maximum", FLT_MAX).toDouble();
@@ -205,7 +199,7 @@ ParamDoubleSpinBox::ParamDoubleSpinBox(QWidget *parent, AbstractParam *param) : 
 
 ParamComboBox::ParamComboBox(QWidget *parent, AbstractParam *param) : QComboBox(parent) {
     m_param = param;
-    setFixedHeight(fontMetrics().height()+6);
+    setFixedHeight(fontMetrics().height()+8);
     QVariantHash attr = param->attributes();
     QStringList keys = attr["keys"].toStringList();
     QVariantList values = attr["values"].toList();
@@ -236,7 +230,7 @@ void ParamComboBox::updateParam(int index) {
 
 ParamLineEdit::ParamLineEdit(QWidget *parent, AbstractParam *param) : QLineEdit(parent) {
     m_param = param;
-    setFixedHeight(fontMetrics().height()+6);
+    setFixedHeight(fontMetrics().height()+8);
     setText(param->value().toString());
     connect(param, SIGNAL(destroyed(QObject*)), this, SLOT(deleteLater()));
     connect(param, SIGNAL(valueChanged(const QString&)), this, SLOT(setText(const QString&)));
@@ -251,7 +245,7 @@ void ParamLineEdit::updateParam() {
 ParamTextEdit::ParamTextEdit(QWidget *parent, AbstractParam *param) : QToolButton(parent) {
     m_param = param;
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    setFixedHeight(fontMetrics().height()+6);
+    setFixedHeight(fontMetrics().height()+8);
     setText("...");
     setToolTip(m_param->value().toString());
     connect(param, SIGNAL(destroyed(QObject*)), this, SLOT(deleteLater()));
@@ -304,7 +298,8 @@ namespace{
 ParamImageSelect::ParamImageSelect(QWidget *parent, AbstractParam *param) : QWidget(parent) {
     m_param = param;
 
-    QImage image = m_param->value().value<QImage>();
+    m_image = m_param->value().value<QImage>();
+    m_filename = m_image.text("filename");
     
     QHBoxLayout *hbox = new QHBoxLayout(this);
     hbox->setContentsMargins(0,0,0,0);
@@ -313,8 +308,8 @@ ParamImageSelect::ParamImageSelect(QWidget *parent, AbstractParam *param) : QWid
     m_label = new ImageLabel(this);
     m_label->setFrameStyle(QFrame::StyledPanel);
     m_label->setScaledContents(true);
-    m_label->setPixmap(QPixmap::fromImage(image));
-    m_label->setToolTip(image.text("filename"));
+    m_label->setPixmap(QPixmap::fromImage(m_image));
+    m_label->setToolTip(m_filename);
     hbox->addWidget(m_label);
     hbox->setStretchFactor(m_label, 100);
 
@@ -347,8 +342,9 @@ ParamImageSelect::ParamImageSelect(QWidget *parent, AbstractParam *param) : QWid
 
 void ParamImageSelect::setImage(const QImage& image) {
     if (m_image != image) {
+        m_filename = image.text("filename");
         m_image = image;
-        m_label->setToolTip(image.text("filename"));
+        m_label->setToolTip(m_filename);
         m_label->setPixmap(QPixmap::fromImage(image));
         m_param->setValue(image);
     }
@@ -356,13 +352,15 @@ void ParamImageSelect::setImage(const QImage& image) {
 
 
 void ParamImageSelect::clear() {
+    m_image = QImage();
+    m_label->setToolTip("");
     m_label->setPixmap(QPixmap());
-    m_param->setValue(QImage());
+    m_param->setValue(m_image);
 }
 
 
 void ParamImageSelect::edit() {
-    QString filename = QFileDialog::getOpenFileName(this, "Open", window()->windowFilePath(), 
+    QString filename = QFileDialog::getOpenFileName(this, "Open", m_filename,
         "Images (*.png *.bmp *.jpg *.jpeg);;All files (*.*)");
     if (!filename.isEmpty()) {
         QImage image(filename);

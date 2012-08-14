@@ -29,3 +29,5 @@ gpu_image<float4> gpu_gray2rgb( const gpu_image<float>& src, bool saturate=true 
 gpu_image<float> gpu_rgb2gray( const gpu_image<float4>& src );
 
 gpu_image<float4> gpu_swap_rgba( const gpu_image<float4>& src );
+
+gpu_image<float4> gpu_colorize_sign( const gpu_image<float>& src, float scale );

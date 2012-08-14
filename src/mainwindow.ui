@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Coherence-Enhancing Filtering on the GPU</string>
+   <string>cefabs</string>
   </property>
   <property name="documentMode">
    <bool>false</bool>
@@ -21,17 +21,8 @@
   </property>
   <widget class="QWidget" name="m_centralWidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
-    <property name="spacing">
-     <number>4</number>
-    </property>
-    <property name="margin">
-     <number>4</number>
-    </property>
     <item>
-     <layout class="QVBoxLayout" name="m_vbox2">
-      <property name="spacing">
-       <number>4</number>
-      </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <widget class="ImageView" name="m_imageView" native="true">
         <property name="sizePolicy">
@@ -61,6 +52,9 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="LogWindow" name="m_logWindow"/>
+      </item>
      </layout>
     </item>
     <item>
@@ -70,26 +64,14 @@
       </property>
       <item>
        <widget class="QLabel" name="m_logo">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
         <property name="text">
          <string/>
         </property>
         <property name="pixmap">
          <pixmap resource="resources.qrc">:/logo.png</pixmap>
         </property>
-        <property name="scaledContents">
-         <bool>false</bool>
-        </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
-        </property>
-        <property name="margin">
-         <number>10</number>
         </property>
        </widget>
       </item>
@@ -134,6 +116,9 @@
     <addaction name="actionSavePNG"/>
     <addaction name="actionRecord"/>
     <addaction name="separator"/>
+    <addaction name="actionLoadSettings"/>
+    <addaction name="actionSaveSettings"/>
+    <addaction name="separator"/>
     <addaction name="actionSelectDevice"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
@@ -151,6 +136,7 @@
     <addaction name="actionHold"/>
     <addaction name="actionToggle"/>
     <addaction name="separator"/>
+    <addaction name="actionLog"/>
    </widget>
    <widget class="QMenu" name="m_menuHelp">
     <property name="title">
@@ -276,6 +262,27 @@
     <string>Record...</string>
    </property>
   </action>
+  <action name="actionLog">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Log</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
+   </property>
+  </action>
+  <action name="actionLoadSettings">
+   <property name="text">
+    <string>Load Settings...</string>
+   </property>
+  </action>
+  <action name="actionSaveSettings">
+   <property name="text">
+    <string>Save Settings...</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -298,6 +305,11 @@
    <extends>QFrame</extends>
    <header>videocontrols.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>LogWindow</class>
+   <extends>QPlainTextEdit</extends>
+   <header>logwindow.h</header>
   </customwidget>
  </customwidgets>
  <resources>
@@ -417,18 +429,18 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionSavePNG</sender>
-   <signal>triggered()</signal>
-   <receiver>m_imageView</receiver>
-   <slot>savePNG()</slot>
+   <sender>actionLog</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>m_logWindow</receiver>
+   <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
      <y>-1</y>
     </hint>
     <hint type="destinationlabel">
-     <x>290</x>
-     <y>384</y>
+     <x>356</x>
+     <y>662</y>
     </hint>
    </hints>
   </connection>

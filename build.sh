@@ -3,4 +3,4 @@ cmake -E make_directory build
 cd build
 cmake ..
 make
-cpack
+cpack --config CPackConfig.cmake

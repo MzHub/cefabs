@@ -206,3 +206,24 @@ gpu_image<float4> gpu_swap_rgba( const gpu_image<float4>& src ) {
     GPU_CHECK_ERROR();
     return dst;
 }
+
+
+__global__ void imp_colorize_sign( gpu_plm2<float4> dst, const gpu_plm2<float> src, float scale ) 
+{
+    const int ix = __mul24(blockDim.x, blockIdx.x) + threadIdx.x;
+    const int iy = __mul24(blockDim.y, blockIdx.y) + threadIdx.y;
+    if(ix >= dst.w || iy >= dst.h)
+        return;
+
+    float c = src(ix, iy);
+    float H = clamp(c * scale, -1.0f, 1.0f);
+    dst(ix, iy) = make_float4( 0, (H > 0)? H : 0, (H < 0)? -H : 0, 1);
+}
+
+
+gpu_image<float4> gpu_colorize_sign( const gpu_image<float>& src, float scale ) {
+    gpu_image<float4> dst(src.size());
+    imp_colorize_sign<<<dst.blocks(), dst.threads()>>>(dst, src, scale);
+    GPU_CHECK_ERROR();
+    return dst;
+}

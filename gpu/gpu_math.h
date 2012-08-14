@@ -52,6 +52,10 @@ inline float rsqrtf(float x)
 {
     return 1.0f / sqrtf(x);
 }
+
+#ifdef _MSC_VER
+inline float copysignf(float x, float y) { return _copysignf(x, y); }
+#endif
 #endif
 
 // float functions

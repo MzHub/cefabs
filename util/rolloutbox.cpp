@@ -1,6 +1,6 @@
 //
 // by Jan Eric Kyprianidis <www.kyprianidis.com>
-// Copyright (C) 2010-2011 Computer Graphics Systems Group at the
+// Copyright (C) 2010-2012 Computer Graphics Systems Group at the
 // Hasso-Plattner-Institut, Potsdam, Germany <www.hpi3d.de>
 // 
 // This program is free software: you can redistribute it and/or modify

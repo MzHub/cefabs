@@ -1,6 +1,6 @@
 //
 // by Jan Eric Kyprianidis <www.kyprianidis.com>
-// Copyright (C) 2010-2011 Computer Graphics Systems Group at the
+// Copyright (C) 2010-2012 Computer Graphics Systems Group at the
 // Hasso-Plattner-Institut, Potsdam, Germany <www.hpi3d.de>
 // 
 // This program is free software: you can redistribute it and/or modify
@@ -23,7 +23,6 @@ class ParamUI : public RolloutBox {
     Q_OBJECT
 public:
     ParamUI(QWidget *parent, QObject *object);
-    virtual bool event(QEvent *event);
 
 protected:
     void addObjectParameters(QObject *obj);
@@ -125,6 +124,7 @@ protected slots:
 
 protected:
     QPointer<AbstractParam> m_param;
+    QString m_filename;
     QImage m_image;
     QLabel *m_label;
     QToolButton *m_edit;

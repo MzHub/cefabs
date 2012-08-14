@@ -1,12 +1,12 @@
 //
 // by Jan Eric Kyprianidis <www.kyprianidis.com>
-// Copyright (C) 2010-2011 Computer Graphics Systems Group at the
+// Copyright (C) 2010-2012 Computer Graphics Systems Group at the
 // Hasso-Plattner-Institut, Potsdam, Germany <www.hpi3d.de>
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
 // copyright notice and this permission notice appear in all copies.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
 // WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
@@ -19,76 +19,84 @@
 
 #include "gpu_image.h"
 
-gpu_image<float4> gpu_st_scharr( const gpu_image<float>& src, float rho=0);
-gpu_image<float4> gpu_st_scharr( const gpu_image<float4>& src, float rho=0);
 
-gpu_image<float4> gpu_st_tfm( const gpu_image<float4>& st );
-gpu_image<float4> gpu_st_lfm( const gpu_image<float4>& st, float alpha=0 );
-gpu_image<float> gpu_st_angle( const gpu_image<float4>& st );
-gpu_image<float> gpu_st_anisotropy( const gpu_image<float4>& st );
+inline __host__ __device__
+void solve_eig_psd( float E, float F, float G, float& lambda1,
+                    float& lambda2, float2& ev )
+{
+    float B = (E + G) / 2;
+    if (B > 0) {
+        float D = (E - G) / 2;
+        float FF = F*F;
+        float R = sqrtf(D*D + FF);
+        lambda1 = B + R;
+        lambda2 = fmaxf(0, E*G - FF) / lambda1;
 
-gpu_image<float4> gpu_st_threshold_mag( const gpu_image<float4>& st, float threshold );
-gpu_image<float4> gpu_st_normalize( const gpu_image<float4>& st );
-gpu_image<float4> gpu_st_flatten( const gpu_image<float4>& st );
-gpu_image<float4> gpu_st_rotate( const gpu_image<float4>& st, float angle );
-
-
-inline __host__ __device__ float st2angle(const float4 g) {
-    return 0.5f * atan2(2 * g.z, g.x - g.y) + CUDART_PIO2_F;
+        if (R > 0) {
+            if (D >= 0) {
+                float nx = D + R;
+                ev = make_float2(nx, F) * rsqrtf(nx*nx + FF);
+            } else {
+                float ny = -D + R;
+                ev = make_float2(F, ny) * rsqrtf(FF + ny*ny);
+            }
+        } else {
+            ev = make_float2(1, 0);
+        }
+    } else {
+        lambda1 = lambda2 = 0;
+        ev = make_float2(1, 0);
+    }
 }
 
 
-inline __host__ __device__ float2 st2tangent(const float4 g) {
-    float phi = st2angle(g);
-    return make_float2(cosf(phi), sinf(phi));
+inline __host__ __device__
+float2 solve_eig_psd_ev( float E, float F, float G )
+{
+    float B = (E + G) / 2;
+    if (B > 0) {
+        float D = (E - G) / 2;
+        float FF = F*F;
+        float R = sqrtf(D*D + FF);
+
+        if (R > 0) {
+            if (D >= 0) {
+                float nx = D + R;
+                return make_float2(nx, F) * rsqrtf(nx*nx + FF);
+            } else {
+                float ny = -D + R;
+                return make_float2(F, ny) * rsqrtf(FF + ny*ny);
+            }
+        }
+    }
+    return make_float2(1, 0);
 }
 
 
-inline __host__ __device__ float2 st2lambda(float4 g) {
-    float a = 0.5f * (g.y + g.x); 
-    float b = 0.5f * sqrtf(fmaxf(0.0f, g.y*g.y - 2*g.x*g.y + g.x*g.x + 4*g.z*g.z));
-    return make_float2(a + b, a - b);
+inline __host__ __device__
+float solve_eig_psd_lambda1( float E, float F, float G ) {
+    float B = (E + G) / 2;
+    if (B > 0) {
+        float D = (E - G) / 2;
+        float FF = F*F;
+        float R = sqrtf(D*D + FF);
+        return B + R;
+    }
+    return 0;
 }
 
 
-inline __host__ __device__ float4 st2tfm(const float4 g) {
-    float2 l = st2lambda(g);
-    float2 t = st2tangent(g);
-    return make_float4(t.x, t.y, l.x, l.y);
+inline __host__ __device__ float2 st_major_ev(const float4 g) {
+    return solve_eig_psd_ev(g.x, g.y, g.z);
 }
 
 
-inline __host__ __device__ float tfm2A(float4 t) {
-    float lambda1 = t.z;
-    float lambda2 = t.w;
-    return (lambda1 + lambda2 > 0)?
-        (lambda1 - lambda2) / (lambda1 + lambda2) : 0;
+inline __host__ __device__ float2 st_minor_ev(const float4 g) {
+    float2 ev = solve_eig_psd_ev(g.x, g.y, g.z);
+    return make_float2(ev.y, -ev.x);
 }
 
 
-inline __host__ __device__ float st2A(float4 g) {
-    float a = 0.5f * (g.y + g.x); 
-    float b = 0.5f * sqrtf(fmaxf(0.0f, g.y*g.y - 2*g.x*g.y + g.x*g.x + 4*g.z*g.z));
-    float lambda1 = a + b;
-    float lambda2 = a - b;
-    return (lambda1 + lambda2 > 0)?
-        (lambda1 - lambda2) / (lambda1 + lambda2) : 0;
-}
-
-
-inline __host__ __device__ float4 st2lfm(float4 g) {
-    float2 t = st2tangent(g);
-    return make_float4( t.x, t.y, 1, 1 );
-}
-
-
-inline __host__ __device__ float4 st2lfm(float4 g, float alpha) {
-    float2 t = st2tangent(g);
-    float A = st2A(g);
-    return make_float4( 
-        t.x, 
-        t.y, 
-        clamp((alpha + A) / alpha, 0.1f, 2.0f), 
-        clamp(alpha / (alpha + A), 0.1f, 2.0f)
-    );
+inline __host__ __device__ float st_lambda1(float4 g) {
+    return solve_eig_psd_lambda1(g.x, g.y, g.z);
 }

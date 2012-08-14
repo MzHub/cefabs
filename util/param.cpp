@@ -1,6 +1,6 @@
 //
 // by Jan Eric Kyprianidis <www.kyprianidis.com>
-// Copyright (C) 2010-2011 Computer Graphics Systems Group at the
+// Copyright (C) 2010-2012 Computer Graphics Systems Group at the
 // Hasso-Plattner-Institut, Potsdam, Germany <www.hpi3d.de>
 // 
 // This program is free software: you can redistribute it and/or modify
@@ -61,14 +61,14 @@ QString AbstractParam::tooltip() const {
 
 
 void AbstractParam::saveValue(QSettings& settings) {
-    if (type() != QVariant::Invalid) {
+    if ((type() != QVariant::Invalid) && !name().isEmpty()) {
         settings.setValue(name(), value());
     }
 }
 
 
 void AbstractParam::restoreValue(QSettings& settings) {
-    if (type() != QVariant::Invalid) {
+    if ((type() != QVariant::Invalid) && !name().isEmpty()) {
         QVariant v = settings.value(name());
         setValue(v);
     }
@@ -449,6 +449,7 @@ void ParamImage::restoreValue(QSettings& settings) {
     if (fi.exists()) {
         QImage image(path);
         if (!image.isNull()) {
+            image.setText("filename", path);    
             setValue(image);
         }
     }
