@@ -16,7 +16,7 @@
 
 Requirements:
 
-    * CUDA 4: http://developer.nvidia.com/cuda-toolkit-40
+    * CUDA 4: http://developer.nvidia.com/cuda/cuda-downloads
     * CMake: http://www.cmake.org
     * Qt: http://qt.nokia.com
     * Libav: http://www.libav.org [optional]
